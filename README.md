@@ -108,7 +108,7 @@ Then compile & install using the following standard commands:
 ./configure
 make format (only required if submitting pull requests)
 make
-make install
+sudo make install
 ```
 
 Then run nwipe !

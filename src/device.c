@@ -167,10 +167,6 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
                 nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored as per command line option --nousb", dev->path );
                 return 0;
             }
-            if (bus == NWIPE_DEVICE_NVME) {
-                nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored (hardcoded)", dev->path );
-                return 0;
-            }
         }
         else
         {
@@ -182,6 +178,15 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
                 return 0;
             }
         }
+    }
+
+    // HARDCODED:
+    // Ignore NVME devices.
+    r = nwipe_get_device_bus_type_and_serialno( dev->path, &bus, tmp_serial );
+    if( bus == NWIPE_DEVICE_NVME )
+    {
+        nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored (hardcoded)", dev->path );
+        return 0;
     }
 
     /* Try opening the device to see if it's valid. Close on completion. */
