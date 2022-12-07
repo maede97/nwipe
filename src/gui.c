@@ -213,11 +213,11 @@ void nwipe_init_pairs( void )
         }
         else
         {
-            init_pair( 1, COLOR_WHITE, COLOR_BLUE );
+            init_pair( 1, COLOR_WHITE, COLOR_RED );
         }
 
         /* Set gray (or cyan) on blue as the normal color. */
-        init_pair( 2, COLOR_CYAN, COLOR_BLUE );
+        init_pair( 2, COLOR_CYAN, COLOR_RED );
 
         /* Set red on blue as the hilite color. */
         init_pair( 3, COLOR_RED, COLOR_BLUE );
@@ -745,6 +745,10 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
              * and the else part will log the out of bounds values for debugging */
             if( i + offset >= 0 && i + offset < count )
             {
+                int enc = c[i + offset]->enclosure * 8 + c[i + offset]->enclosure_slot + 1;
+                if (enc == -8) {
+                    enc = -1;
+                }
 
                 switch( c[i + offset]->select )
                 {
@@ -752,21 +756,20 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
 
                         if( nwipe_options.method == &nwipe_verify_zero || nwipe_options.method == &nwipe_verify_one )
                         {
+                            
                             wprintw( main_window,
-                                     "[vrfy] %s %d/%d %s [%s] ",
+                                     "[vrfy] %s %2d %s [%s] ",
                                      c[i + offset]->gui_device_name,
-                                     c[i + offset]->enclosure,
-                                     c[i + offset]->enclosure_slot,
+                                     enc,
                                      c[i + offset]->device_type_str,
                                      c[i + offset]->device_size_text );
                         }
                         else
                         {
                             wprintw( main_window,
-                                     "[wipe] %s %d/%d %s [%s] ",
+                                     "[wipe] %s %2d %s [%s] ",
                                      c[i + offset]->gui_device_name,
-                                     c[i + offset]->enclosure,
-                                     c[i + offset]->enclosure_slot,
+                                     enc,
                                      c[i + offset]->device_type_str,
                                      c[i + offset]->device_size_text );
                         }
@@ -775,10 +778,9 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
                     case NWIPE_SELECT_FALSE:
                         /* Print an element that is not selected. */
                         wprintw( main_window,
-                                 "[    ] %s %d/%d %s [%s] ",
+                                 "[    ] %s %2d %s [%s] ",
                                  c[i + offset]->gui_device_name,
-                                 c[i + offset]->enclosure,
-                                 c[i + offset]->enclosure_slot,
+                                 enc,
                                  c[i + offset]->device_type_str,
                                  c[i + offset]->device_size_text );
                         break;
@@ -787,10 +789,9 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
 
                         /* This element will be wiped when its parent is wiped. */
                         wprintw( main_window,
-                                 "[****] %s %d/%d %s [%s] ",
+                                 "[****] %s %2d %s [%s] ",
                                  c[i + offset]->gui_device_name,
-                                 c[i + offset]->enclosure,
-                                 c[i + offset]->enclosure_slot,
+                                 enc,
                                  c[i + offset]->device_type_str,
                                  c[i + offset]->device_size_text );
                         break;
@@ -799,10 +800,9 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
 
                         /* We can't wipe this element because it has a child that is being wiped. */
                         wprintw( main_window,
-                                 "[----] %s %d/%d %s [%s] ",
+                                 "[----] %s %2d %s [%s] ",
                                  c[i + offset]->gui_device_name,
-                                 c[i + offset]->enclosure,
-                                 c[i + offset]->enclosure_slot,
+                                 enc,
                                  c[i + offset]->device_type_str,
                                  c[i + offset]->device_size_text );
                         break;

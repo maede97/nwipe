@@ -340,8 +340,10 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
 
     // try to get enclosure and slot numbers
     r = nwipe_get_device_enclosure_and_slot( next_device, &next_device->enclosure, &next_device->enclosure_slot );
-    if (r != 0) {
-        nwipe_log( NWIPE_LOG_WARNING, "Unable to get enclosure and slot numbers for device %s", next_device->device_name );
+    if( r != 0 )
+    {
+        nwipe_log(
+            NWIPE_LOG_WARNING, "Unable to get enclosure and slot numbers for device %s", next_device->device_name );
     }
 
     if( strlen( (const char*) next_device->device_serial_no ) )
@@ -433,6 +435,71 @@ char* trim( char* str )
     return str;
 }
 
+void removeChar( char* str, char garbage )
+{
+
+    char *src, *dst;
+    for( src = dst = str; *src != '\0'; src++ )
+    {
+        *dst = *src;
+        if( *dst != garbage )
+            dst++;
+    }
+    *dst = '\0';
+}
+
+int parse_slot( int* slot, char* command, char* serial_number_nwipe )
+{
+    FILE* output = popen( command, "r" );
+    if( output == NULL )
+    {
+        nwipe_log( NWIPE_LOG_WARNING, "sas2ircu output is NULL" );
+        return 0;
+    }
+    char line[256];
+    int found = 0;
+    int curr_slot = -1;
+    while( fgets( line, sizeof( line ), output ) != NULL )
+    {
+        if( strstr( line, "Slot #" ) != NULL )
+        {
+            char* slot_str = strtok( line, ":" );
+            slot_str = strtok( NULL, ":" );
+            curr_slot = atoi( slot_str );
+            continue;
+        }
+        if( strstr( line, "Serial No" ) != NULL )
+        {
+            char* sas_ser = strtok( line, ":" );
+            sas_ser = strtok( NULL, ":" );
+            sas_ser = trim( sas_ser );
+
+            removeChar( sas_ser, '-' );
+
+            if( strstr( serial_number_nwipe, sas_ser ) != NULL )
+            {
+
+                // Match
+                found = 1;
+                break;
+            }
+        }
+        if( strstr( line, serial_number_nwipe ) != NULL )
+        {
+            found = 1;
+            break;
+        }
+    }
+
+    pclose( output );
+    if( found )
+    {
+        *slot = curr_slot;
+        return 1;
+    }
+    return 0;
+}
+
 int nwipe_get_device_enclosure_and_slot( nwipe_context_t* dev_ctx, int* enclosure, int* slot )
 {
     // for now.
@@ -448,90 +515,19 @@ int nwipe_get_device_enclosure_and_slot( nwipe_context_t* dev_ctx, int* enclosur
         nwipe_log( NWIPE_LOG_WARNING, "sas2ircu not found, skipping SAS enclosure and slot detection" );
         return 1;
     }
-
-    FILE* sas2ircu_0 = popen( sas2ircu_0_command, "r" );
-    if( sas2ircu_0 == NULL )
-    {
-        nwipe_log( NWIPE_LOG_WARNING, "popen failed to create stream for sas2ircu 0 display" );
-        return 1;
-    }
-
     // get serial number from dev
     char* serialnumber = dev_ctx->device_serial_no;
+    removeChar( serialnumber, '-' );  // remove '-' from serialnumber
 
-    // parse it
-    char line[512];
-    int found = 0;
-    int curr_enclosure = -1;
-    int curr_slot = -1;
-    while( fgets( line, sizeof( line ), sas2ircu_0 ) != NULL )
+    if( parse_slot( slot, sas2ircu_0_command, serialnumber ) )
     {
-        if( strstr( line, "Enclosure" ) != NULL )
-        {
-            char* enclosure_str = strtok( line, ":" );
-            enclosure_str = strtok( NULL, ":" );
-            curr_enclosure = atoi( enclosure_str );
-            continue;
-        }
-        if( strstr( line, "Slot" ) != NULL )
-        {
-            char* slot_str = strtok( line, ":" );
-            slot_str = strtok( NULL, ":" );
-            curr_slot = atoi( slot_str );
-            continue;
-        }
-
-        if( strstr( line, serialnumber ) != NULL )
-        {
-            found = 1;
-            break;
-        }
-    }
-    pclose( sas2ircu_0 );
-    if( found )
-    {
-        *enclosure = curr_enclosure;
-        *slot = curr_slot;
+        *enclosure = 0;
         return 0;
     }
 
-    // run sas2ircu 1 display, parse output for device, return enclosure and slot
-    FILE* sas2ircu_1 = popen( sas2ircu_1_command, "r" );
-    if( sas2ircu_1 == NULL )
+    if( parse_slot( slot, sas2ircu_1_command, serialnumber ) )
     {
-        nwipe_log( NWIPE_LOG_WARNING, "popen failed to create stream for sas2ircu 1 display" );
-        return 1;
-    }
-    curr_enclosure = -1;
-    curr_slot = -1;
-    while( fgets( line, sizeof( line ), sas2ircu_1 ) != NULL )
-    {
-        if( strstr( line, "Enclosure" ) != NULL )
-        {
-            char* enclosure_str = strtok( line, ":" );
-            enclosure_str = strtok( NULL, ":" );
-            curr_enclosure = atoi( enclosure_str );
-            continue;
-        }
-        if( strstr( line, "Slot" ) != NULL )
-        {
-            char* slot_str = strtok( line, ":" );
-            slot_str = strtok( NULL, ":" );
-            curr_slot = atoi( slot_str );
-            continue;
-        }
-
-        if( strstr( line, serialnumber ) != NULL )
-        {
-            found = 1;
-            break;
-        }
-    }
-    pclose( sas2ircu_1 );
-    if( found )
-    {
-        *enclosure = curr_enclosure;
-        *slot = curr_slot;
+        *enclosure = 1;
         return 0;
     }
 
