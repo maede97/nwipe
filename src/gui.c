@@ -2828,12 +2828,25 @@ void* nwipe_gui_status( void* ptr )
             /* Print information for the user. */
             for( i = offset; i < offset + slots && i < count; i++ )
             {
+                int enc = -1;
+            	if(c[i + offset]->enclosure == -2) {
+            	    enc = -1; // did not work
+            	}
+            	if(c[i + offset]->enclosure == -1) {
+            		// onboard raid
+            		enc = c[i + offset]->enclosure_slot + 1;
+            	}
+            	if(c[i + offset]->enclosure >= 0) {
+                	enc = c[i + offset]->enclosure * 8 + c[i + offset]->enclosure_slot + 4;
+                }
+
                 /* Print the device details. */
                 mvwprintw( main_window,
                            yy++,
                            2,
-                           "%s %s [%s] ",
+                           "%s %2d %s [%s] ",
                            c[i]->device_name,
+                           enc,
                            c[i]->device_type_str,
                            c[i]->device_size_text );
                 wprintw_temperature( c[i] );
