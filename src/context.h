@@ -103,6 +103,8 @@ typedef struct nwipe_context_t_
     char device_type_str[14];  // Indicates an IDE, SCSI, USB etc as per nwipe_device_t but in ascii
     char device_serial_no[21];  // Serial number(processed, 20 characters plus null termination) of the device.
     int device_target;  // The device target.
+    int enclosure; // The enclosure number in the raid controller;
+    int enclosure_slot; // The enclosure slot number in the raid controller;
 
     u64 eta;  // The estimated number of seconds until method completion.
     int entropy_fd;  // The entropy source. Usually /dev/urandom.

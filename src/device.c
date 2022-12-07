@@ -338,6 +338,12 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
             break;
     }
 
+    // try to get enclosure and slot numbers
+    r = nwipe_get_device_enclosure_and_slot( next_device, &next_device->enclosure, &next_device->enclosure_slot );
+    if (r != 0) {
+        nwipe_log( NWIPE_LOG_WARNING, "Unable to get enclosure and slot numbers for device %s", next_device->device_name );
+    }
+
     if( strlen( (const char*) next_device->device_serial_no ) )
     {
         snprintf( next_device->device_label,
@@ -361,12 +367,14 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
     }
 
     nwipe_log( NWIPE_LOG_NOTICE,
-               "Found %s, %s, %s, %s, S/N=%s",
+               "Found %s, %s, %s, %s, S/N=%s, %d/%d",
                next_device->device_name,
                next_device->device_type_str,
                next_device->device_model,
                next_device->device_size_text,
-               next_device->device_serial_no );
+               next_device->device_serial_no,
+               next_device->enclosure,
+               next_device->enclosure_slot );
 
     ( *c )[dcount] = next_device;
     return 1;
@@ -423,6 +431,111 @@ char* trim( char* str )
         *endp = '\0';
     }
     return str;
+}
+
+int nwipe_get_device_enclosure_and_slot( nwipe_context_t* dev_ctx, int* enclosure, int* slot )
+{
+    // for now.
+    *enclosure = -1;
+    *slot = -1;
+
+    char sas2ircu_0_command[] = "sas2ircu 0 display";
+    char sas2ircu_1_command[] = "sas2ircu 1 display";
+
+    // run sas2ircu 0 display, parse output for device, return enclosure and slot
+    if( system( "which sas2ircu > /dev/null 2>&1" ) )
+    {
+        nwipe_log( NWIPE_LOG_WARNING, "sas2ircu not found, skipping SAS enclosure and slot detection" );
+        return 1;
+    }
+
+    FILE* sas2ircu_0 = popen( sas2ircu_0_command, "r" );
+    if( sas2ircu_0 == NULL )
+    {
+        nwipe_log( NWIPE_LOG_WARNING, "popen failed to create stream for sas2ircu 0 display" );
+        return 1;
+    }
+
+    // get serial number from dev
+    char* serialnumber = dev_ctx->device_serial_no;
+
+    // parse it
+    char line[512];
+    int found = 0;
+    int curr_enclosure = -1;
+    int curr_slot = -1;
+    while( fgets( line, sizeof( line ), sas2ircu_0 ) != NULL )
+    {
+        if( strstr( line, "Enclosure" ) != NULL )
+        {
+            char* enclosure_str = strtok( line, ":" );
+            enclosure_str = strtok( NULL, ":" );
+            curr_enclosure = atoi( enclosure_str );
+            continue;
+        }
+        if( strstr( line, "Slot" ) != NULL )
+        {
+            char* slot_str = strtok( line, ":" );
+            slot_str = strtok( NULL, ":" );
+            curr_slot = atoi( slot_str );
+            continue;
+        }
+
+        if( strstr( line, serialnumber ) != NULL )
+        {
+            found = 1;
+            break;
+        }
+    }
+    pclose( sas2ircu_0 );
+    if( found )
+    {
+        *enclosure = curr_enclosure;
+        *slot = curr_slot;
+        return 0;
+    }
+
+    // run sas2ircu 1 display, parse output for device, return enclosure and slot
+    FILE* sas2ircu_1 = popen( sas2ircu_1_command, "r" );
+    if( sas2ircu_1 == NULL )
+    {
+        nwipe_log( NWIPE_LOG_WARNING, "popen failed to create stream for sas2ircu 1 display" );
+        return 1;
+    }
+    curr_enclosure = -1;
+    curr_slot = -1;
+    while( fgets( line, sizeof( line ), sas2ircu_1 ) != NULL )
+    {
+        if( strstr( line, "Enclosure" ) != NULL )
+        {
+            char* enclosure_str = strtok( line, ":" );
+            enclosure_str = strtok( NULL, ":" );
+            curr_enclosure = atoi( enclosure_str );
+            continue;
+        }
+        if( strstr( line, "Slot" ) != NULL )
+        {
+            char* slot_str = strtok( line, ":" );
+            slot_str = strtok( NULL, ":" );
+            curr_slot = atoi( slot_str );
+            continue;
+        }
+
+        if( strstr( line, serialnumber ) != NULL )
+        {
+            found = 1;
+            break;
+        }
+    }
+    pclose( sas2ircu_1 );
+    if( found )
+    {
+        *enclosure = curr_enclosure;
+        *slot = curr_slot;
+        return 0;
+    }
+
+    return 1;
 }
 
 int nwipe_get_device_bus_type_and_serialno( char* device, nwipe_device_t* bus, char* serialnumber )

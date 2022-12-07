@@ -753,16 +753,20 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
                         if( nwipe_options.method == &nwipe_verify_zero || nwipe_options.method == &nwipe_verify_one )
                         {
                             wprintw( main_window,
-                                     "[vrfy] %s %s [%s] ",
+                                     "[vrfy] %s %d/%d %s [%s] ",
                                      c[i + offset]->gui_device_name,
+                                     c[i + offset]->enclosure,
+                                     c[i + offset]->enclosure_slot,
                                      c[i + offset]->device_type_str,
                                      c[i + offset]->device_size_text );
                         }
                         else
                         {
                             wprintw( main_window,
-                                     "[wipe] %s %s [%s] ",
+                                     "[wipe] %s %d/%d %s [%s] ",
                                      c[i + offset]->gui_device_name,
+                                     c[i + offset]->enclosure,
+                                     c[i + offset]->enclosure_slot,
                                      c[i + offset]->device_type_str,
                                      c[i + offset]->device_size_text );
                         }
@@ -771,8 +775,10 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
                     case NWIPE_SELECT_FALSE:
                         /* Print an element that is not selected. */
                         wprintw( main_window,
-                                 "[    ] %s %s [%s] ",
+                                 "[    ] %s %d/%d %s [%s] ",
                                  c[i + offset]->gui_device_name,
+                                 c[i + offset]->enclosure,
+                                 c[i + offset]->enclosure_slot,
                                  c[i + offset]->device_type_str,
                                  c[i + offset]->device_size_text );
                         break;
@@ -781,8 +787,10 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
 
                         /* This element will be wiped when its parent is wiped. */
                         wprintw( main_window,
-                                 "[****] %s %s [%s] ",
+                                 "[****] %s %d/%d %s [%s] ",
                                  c[i + offset]->gui_device_name,
+                                 c[i + offset]->enclosure,
+                                 c[i + offset]->enclosure_slot,
                                  c[i + offset]->device_type_str,
                                  c[i + offset]->device_size_text );
                         break;
@@ -791,8 +799,10 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
 
                         /* We can't wipe this element because it has a child that is being wiped. */
                         wprintw( main_window,
-                                 "[----] %s %s [%s] ",
+                                 "[----] %s %d/%d %s [%s] ",
                                  c[i + offset]->gui_device_name,
+                                 c[i + offset]->enclosure,
+                                 c[i + offset]->enclosure_slot,
                                  c[i + offset]->device_type_str,
                                  c[i + offset]->device_size_text );
                         break;
