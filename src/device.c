@@ -167,6 +167,10 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
                 nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored as per command line option --nousb", dev->path );
                 return 0;
             }
+            if (bus == NWIPE_DEVICE_NVME) {
+                nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored (hardcoded)", dev->path );
+                return 0;
+            }
         }
         else
         {
