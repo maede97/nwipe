@@ -188,6 +188,11 @@ int check_device( nwipe_context_t*** c, PedDevice* dev, int dcount )
         nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored (hardcoded)", dev->path );
         return 0;
     }
+    if(bus == NWIPE_DEVICE_VIRT)
+    {
+        nwipe_log( NWIPE_LOG_NOTICE, "Device %s ignored (hardcoded)", dev->path );
+        return 0;
+    }	
 
     /* Try opening the device to see if it's valid. Close on completion. */
     if( !ped_device_open( dev ) )
@@ -500,10 +505,32 @@ int parse_slot( int* slot, char* command, char* serial_number_nwipe )
     return 0;
 }
 
+int parse_onboard(int* slot, char* dev_name) {
+
+    if(system("which lsscsi > /dev/null 2>&1")) {
+    	nwipe_log(NWIPE_LOG_WARNING, "lsscsi not found, skipping onboard cage");
+    	return 0;
+    }
+    
+    FILE* output = popen("lsscsi --verbose", "r");
+    if(output == NULL) {
+    	nwipe_log( NWIPE_LOG_WARNING, "lsscsi output is NULL" );
+        return 0;
+    }
+    char line[256];	
+    while( fgets( line, sizeof( line ), output ) != NULL ) {
+    	if(strstr(line, dev_name) != NULL) {
+    	    *slot = line[1] - 49;
+    	    return 1;
+    	}
+    }
+
+}
+
 int nwipe_get_device_enclosure_and_slot( nwipe_context_t* dev_ctx, int* enclosure, int* slot )
 {
     // for now.
-    *enclosure = -1;
+    *enclosure = -2;
     *slot = -1;
 
     char sas2ircu_0_command[] = "sas2ircu 0 display";
@@ -529,6 +556,11 @@ int nwipe_get_device_enclosure_and_slot( nwipe_context_t* dev_ctx, int* enclosur
     {
         *enclosure = 1;
         return 0;
+    }
+    
+    if (parse_onboard(slot, dev_ctx->device_name)) {
+    	*enclosure = -1;
+    	return 0;
     }
 
     return 1;

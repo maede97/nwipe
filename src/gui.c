@@ -216,11 +216,11 @@ void nwipe_init_pairs( void )
             init_pair( 1, COLOR_WHITE, COLOR_RED );
         }
 
-        /* Set gray (or cyan) on blue as the normal color. */
+        /* Set gray (or cyan) on red as the normal color. */
         init_pair( 2, COLOR_CYAN, COLOR_RED );
 
-        /* Set red on blue as the hilite color. */
-        init_pair( 3, COLOR_RED, COLOR_BLUE );
+        /* Set black on red as the highlight color. */
+        init_pair( 3, COLOR_BLACK, COLOR_RED );
 
         /* If we are in tft saver mode set grey text on black background else
          * Set white on blue as the emphasis color */
@@ -745,9 +745,16 @@ void nwipe_gui_select( int count, nwipe_context_t** c )
              * and the else part will log the out of bounds values for debugging */
             if( i + offset >= 0 && i + offset < count )
             {
-                int enc = c[i + offset]->enclosure * 8 + c[i + offset]->enclosure_slot + 1;
-                if (enc == -8) {
-                    enc = -1;
+            	int enc = -1;
+            	if(c[i + offset]->enclosure == -2) {
+            	    enc = -1; // did not work
+            	}
+            	if(c[i + offset]->enclosure == -1) {
+            		// onboard raid
+            		enc = c[i + offset]->enclosure_slot + 1;
+            	}
+            	if(c[i + offset]->enclosure >= 0) {
+                	enc = c[i + offset]->enclosure * 8 + c[i + offset]->enclosure_slot + 4;
                 }
 
                 switch( c[i + offset]->select )
