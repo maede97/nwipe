@@ -49,6 +49,27 @@ char* trim( char* str );
 
 extern int terminate_signal;
 
+int compute_enc(nwipe_context_t** c) {
+    int enc = -1;
+    if((*c)->enclosure == -2) {
+        enc = -1; // did not work
+    }
+    if((*c)->enclosure == -1) {
+        // onboard raid
+        enc = (*c)->enclosure_slot + 1;
+    }
+    if((*c)->enclosure >= 0) {
+        enc = (*c)->enclosure * 8 + (*c)->enclosure_slot + 4;
+    }
+    return enc;
+}
+
+int enclosure_cmp(const void* a, const void* b) {
+    int enc1 = compute_enc((nwipe_context_t**)a);
+    int enc2 = compute_enc((nwipe_context_t**)b);
+    return enc1 - enc2;
+}
+
 int nwipe_device_scan( nwipe_context_t*** c )
 {
     /**
@@ -77,6 +98,10 @@ int nwipe_device_scan( nwipe_context_t*** c )
             break;
         }
     }
+
+    // HARDCODED:
+    // sort all drives by enclosure number
+    qsort(*c, dcount, sizeof(nwipe_context_t*), enclosure_cmp);
 
     /* Return the number of devices that were found. */
     return dcount;

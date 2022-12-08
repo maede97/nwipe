@@ -121,7 +121,7 @@ int nwipe_options_parse( int argc, char** argv )
     nwipe_options.method = &nwipe_zero;
     nwipe_options.prng = ( sizeof( unsigned long int ) >= 8 ) ? &nwipe_isaac64 : &nwipe_isaac;
     nwipe_options.rounds = 1;
-    nwipe_options.noblank = 0;
+    nwipe_options.noblank = 1;
     nwipe_options.nousb = 0;
     nwipe_options.nowait = 0;
     nwipe_options.nosignals = 0;
