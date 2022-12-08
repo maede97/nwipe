@@ -273,19 +273,7 @@ int main( int argc, char** argv )
         /* Set the entropy source. */
         c1[i]->entropy_fd = nwipe_entropy;
 
-        if( nwipe_options.autonuke )
-        {
-            /* When the autonuke option is set, select all disks. */
-            // TODO - partitions
-            // if( c1[i].device_part == 0 ) { c1[i].select = NWIPE_SELECT_TRUE;        }
-            // else                         { c1[i].select = NWIPE_SELECT_TRUE_PARENT; }
-            c1[i]->select = NWIPE_SELECT_TRUE;
-        }
-        else
-        {
-            /* The user must manually select devices. */
-            c1[i]->select = NWIPE_SELECT_FALSE;
-        }
+        c1[i]->select = NWIPE_SELECT_TRUE;
 
         /* Initialise temperature variables for device */
         nwipe_init_temperature( c1[i] );
