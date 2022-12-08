@@ -236,8 +236,8 @@ void nwipe_init_pairs( void )
         /* Set white on green for success messages. */
         init_pair( 5, COLOR_WHITE, COLOR_GREEN );
 
-        /* Set white on red for failure messages. */
-        init_pair( 6, COLOR_WHITE, COLOR_RED );
+        /* Set orange on red for failure messages. */
+        init_pair( 6, COLOR_BLACK, COLOR_YELLOW );
 
         /* Set black on black for when hiding the display. */
         init_pair( 7, COLOR_BLACK, COLOR_BLACK );
@@ -2871,19 +2871,21 @@ void* nwipe_gui_status( void* ptr )
                 {
                     if( c[i]->result == 0 )
                     {
+                    	wattron( main_window, COLOR_PAIR( 5 ) );
                         mvwprintw( main_window, yy++, 4, "[%05.2f%% complete, SUCCESS! ", c[i]->round_percent );
+                        wattroff( main_window, COLOR_PAIR( 5 ) );
                     }
                     else if( c[i]->signal )
                     {
-                        wattron( main_window, COLOR_PAIR( 9 ) );
+                        wattron( main_window, COLOR_PAIR( 6 ) );
                         mvwprintw( main_window, yy++, 4, "(>>> FAILURE! <<<, signal %i) ", c[i]->signal );
-                        wattroff( main_window, COLOR_PAIR( 9 ) );
+                        wattroff( main_window, COLOR_PAIR( 6 ) );
                     }
                     else
                     {
-                        wattron( main_window, COLOR_PAIR( 9 ) );
+                        wattron( main_window, COLOR_PAIR( 6 ) );
                         mvwprintw( main_window, yy++, 4, "(>>>FAILURE!<<<, code %i) ", c[i]->result );
-                        wattroff( main_window, COLOR_PAIR( 9 ) );
+                        wattroff( main_window, COLOR_PAIR( 6 ) );
                     }
 
                 } /* child returned */
