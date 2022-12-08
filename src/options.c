@@ -118,7 +118,7 @@ int nwipe_options_parse( int argc, char** argv )
     /* Set default options. */
     nwipe_options.autonuke = 0;
     nwipe_options.autopoweroff = 0;
-    nwipe_options.method = &nwipe_one;
+    nwipe_options.method = &nwipe_zero;
     nwipe_options.prng = ( sizeof( unsigned long int ) >= 8 ) ? &nwipe_isaac64 : &nwipe_isaac;
     nwipe_options.rounds = 1;
     nwipe_options.noblank = 0;
